@@ -23,7 +23,9 @@ class CommandThread(threading.Thread):
     :param serial_lock: (threading.Lock)
     """
 
-    def __init__(self, serial_file, command_queue, exit_event, n_received_semaphore, serial_lock):
+    def __init__(
+        self, serial_file, command_queue, exit_event, n_received_semaphore, serial_lock
+    ):
         threading.Thread.__init__(self)
         self.deamon = True
         self.serial_file = serial_file
@@ -46,7 +48,7 @@ class CommandThread(threading.Thread):
 
             with self.serial_lock:
                 write_order(self.serial_file, order)
-                # print("Sent {}".format(order))
+                print(f"Sent {order} | time = {time.time()}")
                 if order == Order.MOTOR:
                     write_i8(self.serial_file, param)
                 elif order == Order.SERVO:
@@ -88,6 +90,7 @@ class ListenerThread(threading.Thread):
             with self.serial_lock:
                 try:
                     order = Order(byte)
+                    print(order, time.time())
                 except ValueError:
                     continue
                 if order == Order.RECEIVED:

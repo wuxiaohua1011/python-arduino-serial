@@ -1,5 +1,5 @@
 from __future__ import print_function, division, absolute_import
-
+import serial
 import time
 
 from robust_serial import (
@@ -46,44 +46,40 @@ def reconnect():
 if __name__ == "__main__":
 
     try:
-        serial_file = open_serial_port(baudrate=115200, timeout=1)
+        serial_file = serial.Serial(
+            port="/dev/cu.usbmodem11401", baudrate=115200, timeout=1, writeTimeout=1
+        )
     except Exception as e:
         raise e
 
-    # for i in range(10):
+    # clear buffer
+    # for i in range(5):
     #     try:
-    #         write_order(serial_file, Order.HELLO)
-    #         receive_order: Order = read_order(serial_file)
-    #         print(i, receive_order)
-    #         if receive_order in [Order.ALREADY_CONNECTED]:
-    #             break
-    #         else:
-    #             print("trying to connect...")
-    #             time.sleep(2.0)
+    #         received_order = read_order(serial_file)
     #     except:
-    #         print("trying to connect...")
-    #         time.sleep(2.0)
+    #         pass
+    # print("buffer cleaned")
 
-    # print("-----------------")
-    # for i in range(10):
-    #     write_order(serial_file, Order.STOP)
+    # ensure connection is good
+    for i in range(10):
+        write_order(serial_file, Order.HELLO)
+        try:
+            received_order = read_order(serial_file)
+            if received_order in [Order.HELLO, Order.ALREADY_CONNECTED]:
+                print("connection success")
+                received_order = read_order(serial_file)
+                if received_order in [Order.RECEIVED]:
+                    print("Receipt confirmed, ready for data")
+                    break
+            print("trying again")
+        except Exception as e:
+            print(e)
 
-    #     receive_order: Order = read_order(serial_file)
-    #     print(i, receive_order)
-
-    # serial_file = reconnect()
-
-    # # Equivalent to write_i8(serial_file, Order.MOTOR.value)
-    # while True:
-    #     try:
-    #         write_order(serial_file, Order.STOP)
-    #         receive_order1: Order = read_order(serial_file)
-    #         receive_order2: Order = read_order(serial_file)
-
-    #         # code = read_i16(serial_file)
-
-    #         print(
-    #             f"receive_order1: {receive_order1} | receive_order2: {receive_order2} | time: {time.time()} "
-    #         )
-    #     except Exception as e:
-    #         print(e)
+    cmd_sent_but_not_confirmed = 0
+    while True:
+        cmd_sent_but_not_confirmed += 1
+        write_order(serial_file, Order.STOP)
+        received_order = read_order(serial_file)
+        if received_order in [Order.RECEIVED]:
+            cmd_sent_but_not_confirmed -= 1
+        print(received_order, cmd_sent_but_not_confirmed, time.time())
