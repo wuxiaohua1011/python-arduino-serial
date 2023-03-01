@@ -14,9 +14,9 @@ from robust_serial import (
 from robust_serial.utils import open_serial_port
 
 
-if __name__ == "__main__":
+def reconnect():
     try:
-        serial_file = open_serial_port(baudrate=115200, timeout=1)
+        serial_file = open_serial_port(baudrate=115200, timeout=None)
     except Exception as e:
         raise e
 
@@ -25,52 +25,65 @@ if __name__ == "__main__":
     while not is_connected:
         print("Waiting for arduino...")
         write_order(serial_file, Order.HELLO)
-        bytes_array = bytearray(serial_file.read(1))
-        if not bytes_array:
-            time.sleep(2)
-            continue
-        # byte = bytes_array[0]
-        # print(byte)
-        # if byte in [Order.HELLO.value, Order.ALREADY_CONNECTED.value]:
-        #     is_connected = True
         receive_order: Order = read_order(serial_file)
-        if receive_order in [Order.HELLO, Order.ALREADY_CONNECTED]:
+
+        # bytes_array = bytearray(serial_file.read(1))
+        print(receive_order)
+
+        # if not bytes_array:
+        #     time.sleep(2)
+        #     continue
+        receive_order: Order = read_order(serial_file)
+        print(receive_order)
+        if receive_order in [Order.HELLO, Order.ALREADY_CONNECTED, Order.RECEIVED]:
             is_connected = True
 
-    print("Connected to Arduino")
+        receive_order: Order = read_order(serial_file)
+        print(receive_order)
+    return serial_file
 
-    motor_speed = -56
 
-    # Equivalent to write_i8(serial_file, Order.MOTOR.value)
+if __name__ == "__main__":
 
-    write_order(serial_file, Order.STOP)
+    try:
+        serial_file = open_serial_port(baudrate=115200, timeout=1)
+    except Exception as e:
+        raise e
 
-    for i in range(10):
-        try:
-            receive_order: Order = read_order(serial_file)
-
-            # code = read_i16(serial_file)
-
-            print(f"time: {time.time()} | receive_order: {receive_order}")
-        except Exception as e:
-            print(e)
-
-    # while True:
-    #     write_order(serial_file, Order.SERVO)
-    #     write_i16(serial_file, 120)
-
-    #     for _ in range(4):
-    #         order: Order = read_order(serial_file)
-    #         if order in [
-    #             Order.HELLO,
-    #             Order.STOP,
-    #             Order.ALREADY_CONNECTED,
-    #             Order.RECEIVED,
-    #         ]:
-    #             print(f"time: {time.time()} | Ordered received:", order)
-
+    # for i in range(10):
+    #     try:
+    #         write_order(serial_file, Order.HELLO)
+    #         receive_order: Order = read_order(serial_file)
+    #         print(i, receive_order)
+    #         if receive_order in [Order.ALREADY_CONNECTED]:
+    #             break
     #         else:
-    #             code = read_i8(serial_file)
-    #             print(
-    #                 f"time: {time.time()} | Ordered received: {order} | value: {code}"
-    #             )
+    #             print("trying to connect...")
+    #             time.sleep(2.0)
+    #     except:
+    #         print("trying to connect...")
+    #         time.sleep(2.0)
+
+    # print("-----------------")
+    # for i in range(10):
+    #     write_order(serial_file, Order.STOP)
+
+    #     receive_order: Order = read_order(serial_file)
+    #     print(i, receive_order)
+
+    # serial_file = reconnect()
+
+    # # Equivalent to write_i8(serial_file, Order.MOTOR.value)
+    # while True:
+    #     try:
+    #         write_order(serial_file, Order.STOP)
+    #         receive_order1: Order = read_order(serial_file)
+    #         receive_order2: Order = read_order(serial_file)
+
+    #         # code = read_i16(serial_file)
+
+    #         print(
+    #             f"receive_order1: {receive_order1} | receive_order2: {receive_order2} | time: {time.time()} "
+    #         )
+    #     except Exception as e:
+    #         print(e)
